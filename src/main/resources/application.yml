@@ -1,0 +1,265 @@
+# ===== CONFIGURACIÓN BASE DEL SERVIDOR =====
+server:
+  port: 8080
+
+spring:
+  application:
+    name: api-gateway
+
+  cloud:
+    gateway:
+      default-filters:
+        - DedupeResponseHeader=Access-Control-Allow-Credentials Access-Control-Allow-Origin
+
+      server:
+        webflux:
+          globalcors:
+            cors-configurations:
+              "[/**]":
+                allowedOrigins:
+                  - "http://localhost:4200"
+                  - "https://kbastidz.github.io"
+                allowedMethods: "*"
+                allowedHeaders: "*"
+                allowCredentials: true
+          httpclient:
+            connect-timeout: 5000
+            response-timeout: 30s
+            pool:
+              max-connections: 100
+
+# ===== CONFIGURACIÓN DE COGNITO JWT =====
+cognito:
+  jwt:
+    secret: mySecretKey123456789012345678901234567890
+    expiration: 86400000
+
+# ===== CONFIGURACIÓN DE CORS =====
+cors:
+  allowed-origins: http://localhost:4200,https://kbastidz.github.io
+
+# ===============================================
+# NUEVA ARQUITECTURA ESCALABLE - COMPLEMENTARIA
+# ===============================================
+
+gateway:
+  services:
+
+    # === NOTIFICATION SERVICE ===
+    notification-service:
+      name: notification-service
+      host: localhost
+      port: 8081
+      base-path: ""
+      requires-auth: false
+      health-endpoint: /actuator/health
+      custom-headers:
+        X-Service-Type: notification
+        X-Service-Category: communication
+      routes:
+        - route-id: api
+          path: /api/notifications/**
+          target-path: ""
+          module: api
+          requires-auth: false
+        - route-id: health
+          path: /notifications/**
+          target-path: ""
+          module: health
+          requires-auth: false
+        - route-id: ping
+          path: /notifications/ping
+          target-path: /ping
+          module: health
+          requires-auth: false
+
+    # === REC-COGNITO ===
+    rec-cognito:
+      name: rec-cognito
+      host: localhost
+      port: 8082
+      base-path: ""
+      requires-auth: false
+      health-endpoint: /actuator/health
+      custom-headers:
+        X-Service-Type: authentication
+        X-Auth-Provider: aws-cognito
+      routes:
+        - route-id: auth
+          path: /api/v1/auth/**
+          target-path: ""
+          module: authentication
+          requires-auth: false
+        - route-id: admin
+          path: /api/v1/admin/**
+          target-path: ""
+          module: administration
+          requires-auth: false
+        - route-id: health
+          path: /cognito/**
+          target-path: ""
+          module: health
+          requires-auth: false
+        - route-id: ping
+          path: /cognito/ping
+          target-path: /ping
+          module: health
+          requires-auth: false
+
+    # === REC-LEAF-SCAN-CACAO ===
+    rec-leaf-scan-cacao:
+      name: rec-leaf-scan-cacao
+      host: localhost
+      port: 8083
+      base-path: ""
+      requires-auth: true
+      health-endpoint: /actuator/health
+      custom-headers:
+        X-Service-Type: analysis
+        X-AI-Service: leaf-scan
+        X-Crop-Type: cacao
+      routes:
+        - route-id: agricultura
+          path: /api/v1/agricultura/**
+          target-path: ""
+          module: agricultura
+          requires-auth: true
+        - route-id: health
+          path: /leaf-scan/**
+          target-path: ""
+          module: health
+          requires-auth: false
+        - route-id: ping
+          path: /leaf-scan/ping
+          target-path: /ping
+          module: health
+          requires-auth: false
+
+    # === REC-GAMIFICACION ===
+    rec-gamificacion:
+      name: rec-gamificacion
+      host: localhost
+      port: 8084
+      base-path: ""
+      requires-auth: true
+      health-endpoint: /actuator/health
+      custom-headers:
+        X-Service-Type: gamification
+        X-Service-Category: engagement
+        X-Feature-Type: achievements
+      routes:
+        - route-id: gamificacion
+          path: /api/v1/gamificacion/**
+          target-path: ""
+          module: gamificacion
+          requires-auth: true
+        - route-id: health
+          path: /gamificacion/**
+          target-path: ""
+          module: health
+          requires-auth: false
+        - route-id: ping
+          path: /gamificacion/ping
+          target-path: /ping
+          module: health
+          requires-auth: false
+
+    # === REC-EDUCACION ===
+    rec-educacion:
+      name: rec-educacion
+      host: localhost
+      port: 8085
+      base-path: ""
+      requires-auth: true
+      health-endpoint: /actuator/health
+      custom-headers:
+        X-Service-Type: education
+        X-Service-Category: engagement
+        X-Feature-Type: achievements
+      routes:
+        - route-id: educacion
+          path: /api/v1/educacion/**
+          target-path: ""
+          module: educacion
+          requires-auth: true
+        - route-id: health
+          path: /educacion/**
+          target-path: ""
+          module: health
+          requires-auth: false
+        - route-id: ping
+          path: /educacion/ping
+          target-path: /ping
+          module: health
+          requires-auth: false
+  # === CONFIGURACIÓN DE HEALTH CHECKS ===
+  health-check:
+    enabled: true
+    interval: 30s
+    timeout: 10s
+    failure-threshold: 3
+
+  # === CONFIGURACIÓN DE MÉTRICAS ===
+  metrics:
+    enabled: true
+    include-request-path: true
+    include-response-status: true
+
+  # === CONFIGURACIÓN DE RATE LIMITING ===
+  rate-limit:
+    enabled: true
+    default-requests-per-second: 100
+    per-service:
+      notification-service: 50
+      rec-cognito: 200
+      rec-leaf-scan-cacao: 30
+
+  # === CONFIGURACIÓN DE CIRCUIT BREAKER ===
+  circuit-breaker:
+    enabled: true
+    failure-rate-threshold: 50
+    wait-duration-in-open-state: 30s
+    sliding-window-size: 10
+
+  # === CONFIGURACIÓN DE RETRY ===
+  retry:
+    enabled: true
+    max-attempts: 3
+    backoff-delay: 100ms
+    multiplier: 2
+
+# ===============================================
+# CONFIGURACIÓN DE MONITOREO
+# ===============================================
+management:
+  endpoint:
+    health:
+      show-details: always
+    gateway:
+      access: read_only
+    routes:
+      enabled: true
+    services:
+      enabled: true
+    service-health:
+      enabled: true
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,loggers,gateway,routes,services
+
+# ===============================================
+# CONFIGURACIÓN DE LOGGING
+# ===============================================
+logging:
+  level:
+    org.springframework.cloud.gateway: DEBUG
+    com.api.gateway: DEBUG
+    com.gateway: DEBUG
+    root: INFO
+    GatewayController: INFO
+    org.springframework.cloud.gateway.route: DEBUG
+    org.springframework.cloud.gateway.handler: DEBUG
+    com.api.gateway.config.ScalableGatewayConfig: INFO
+    com.api.gateway.config.RouteBuilder: DEBUG
+    com.api.gateway.config.GatewayMetrics: INFO
