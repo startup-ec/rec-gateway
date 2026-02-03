@@ -1,6 +1,6 @@
 # ===== CONFIGURACIÓN BASE DEL SERVIDOR =====
 server:
-  port: ${PORT:8080}
+  port: 8080
 
 spring:
   application:
@@ -31,24 +31,25 @@ spring:
 # ===== CONFIGURACIÓN DE COGNITO JWT =====
 cognito:
   jwt:
-    secret: ${COGNITO_JWT_SECRET}
+    secret: mySecretKey123456789012345678901234567890
     expiration: 86400000
 
-# ===== CONFIGURACIÓN DE CORS (custom) =====
+# ===== CONFIGURACIÓN DE CORS =====
 cors:
   allowed-origins: http://localhost:4200,https://kbastidz.github.io
 
 # ===============================================
 # NUEVA ARQUITECTURA ESCALABLE - COMPLEMENTARIA
 # ===============================================
+
 gateway:
   services:
 
     # === NOTIFICATION SERVICE ===
     notification-service:
       name: notification-service
-      host: ${NOTIFICATION_SERVICE_HOST}
-      port: ${NOTIFICATION_SERVICE_PORT:8081}
+      host: localhost
+      port: 8081
       base-path: ""
       requires-auth: false
       health-endpoint: /actuator/health
@@ -75,8 +76,8 @@ gateway:
     # === REC-COGNITO ===
     rec-cognito:
       name: rec-cognito
-      host: ${REC_COGNITO_HOST}
-      port: ${REC_COGNITO_PORT:8082}
+      host: localhost
+      port: 8082
       base-path: ""
       requires-auth: false
       health-endpoint: /actuator/health
@@ -108,8 +109,8 @@ gateway:
     # === REC-LEAF-SCAN-CACAO ===
     rec-leaf-scan-cacao:
       name: rec-leaf-scan-cacao
-      host: ${REC_LEAF_SCAN_HOST}
-      port: ${REC_LEAF_SCAN_PORT:8083}
+      host: localhost
+      port: 8083
       base-path: ""
       requires-auth: true
       health-endpoint: /actuator/health
@@ -137,8 +138,8 @@ gateway:
     # === REC-GAMIFICACION ===
     rec-gamificacion:
       name: rec-gamificacion
-      host: ${REC_GAMIFICACION_HOST}
-      port: ${REC_GAMIFICACION_PORT:8084}
+      host: localhost
+      port: 8084
       base-path: ""
       requires-auth: true
       health-endpoint: /actuator/health
@@ -166,8 +167,8 @@ gateway:
     # === REC-EDUCACION ===
     rec-educacion:
       name: rec-educacion
-      host: ${REC_EDUCACION_HOST}
-      port: ${REC_EDUCACION_PORT:8085}
+      host: localhost
+      port: 8085
       base-path: ""
       requires-auth: true
       health-endpoint: /actuator/health
@@ -191,7 +192,6 @@ gateway:
           target-path: /ping
           module: health
           requires-auth: false
-
   # === CONFIGURACIÓN DE HEALTH CHECKS ===
   health-check:
     enabled: true

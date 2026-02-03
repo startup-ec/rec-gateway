@@ -1,38 +1,40 @@
-# Dockerfile para Microservicios Spring Boot
-# Este mismo Dockerfile se usa para TODOS los microservicios
-# Colócalo en la carpeta raíz de cada microservicio
+# ==============================
+# ETAPA 1: BUILD (Maven)
+# ==============================
+FROM maven:3.9.6-eclipse-temurin-17 AS build
 
-# Etapa 1: Construcción
-FROM maven:3.9.5-eclipse-temurin-21 AS build
 WORKDIR /app
 
-# Copiar pom.xml primero para aprovechar caché de Docker
+# Copiamos solo lo necesario primero (cache)
 COPY pom.xml .
-RUN mvn dependency:go-offline -B
+RUN mvn dependency:go-offline
 
-# Copiar el código fuente y construir
+# Copiamos el código
 COPY src ./src
+
+# Construimos el JAR
 RUN mvn clean package -DskipTests
 
-# Etapa 2: Runtime
-FROM eclipse-temurin:21-jre-alpine
+# ==============================
+# ETAPA 2: RUNTIME (Lightweight)
+# ==============================
+FROM eclipse-temurin:17-jre-alpine
+
 WORKDIR /app
 
-# Crear usuario no-root por seguridad
-RUN addgroup -S spring && adduser -S spring -G spring
-# Crear directorio de logs y dar permisos
-RUN mkdir -p /app/logs && \
-    chown -R spring:spring /app/logs
-USER spring:spring
-
-# Copiar el JAR desde la etapa de construcción
-COPY --from=build /app/target/*.jar app.jar
-
-# Exponer el puerto (se sobreescribe en docker-compose para cada servicio)
+# Render expone el puerto por variable PORT
 EXPOSE 8080
 
-# Configuración de JVM para contenedores
-ENV JAVA_OPTS="-XX:+UseContainerSupport -XX:MaxRAMPercentage=75.0"
+# Copiamos el JAR desde el build
+COPY --from=build /app/target/*.jar app.jar
 
-# Comando de inicio
-ENTRYPOINT ["sh", "-c", "java $JAVA_OPTS -jar app.jar"]
+# JVM optimizada para contenedores pequeños
+ENV JAVA_OPTS="\
+-XX:+UseContainerSupport \
+-XX:MaxRAMPercentage=75 \
+-XX:InitialRAMPercentage=50 \
+-XX:+ExitOnOutOfMemoryError \
+-Djava.security.egd=file:/dev/./urandom"
+
+# Arranque
+ENTRYPOINT ["sh","-c","java $JAVA_OPTS -jar app.jar"]
