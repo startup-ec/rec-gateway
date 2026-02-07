@@ -73,8 +73,8 @@ gateway:
           requires-auth: false
 
     # === REC-COGNITO ===
-    rec-cognito:
-      name: rec-cognito
+    rec-autenticador:
+      name: rec-autenticador
       host: ${REC_COGNITO_HOST}
       port: ${REC_COGNITO_PORT:8082}
       base-path: ""
@@ -95,12 +95,12 @@ gateway:
           module: administration
           requires-auth: false
         - route-id: health
-          path: /cognito/**
+          path: /autenticador/**
           target-path: ""
           module: health
           requires-auth: false
         - route-id: ping
-          path: /cognito/ping
+          path: /autenticador/ping
           target-path: /ping
           module: health
           requires-auth: false
