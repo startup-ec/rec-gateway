@@ -76,7 +76,7 @@ gateway:
     rec-cognito:
       name: rec-cognito
       host: ${REC_COGNITO_HOST}
-      port: ${REC_COGNITO_PORT}
+      port: ${REC_COGNITO_PORT:}
       base-path: ""
       requires-auth: false
       health-endpoint: /actuator/health
