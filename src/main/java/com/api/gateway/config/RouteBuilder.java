@@ -41,11 +41,13 @@ public class RouteBuilder {
         String routeId = String.format("%s-%s", serviceConfig.getName(), routeConfig.getRouteId());
 
         return builder.route(routeId, r -> {
-            logger.debug("Configuring route: {} for path {}", routeId, routeConfig.getPath());
+            String targetUri = getTargetUri(serviceConfig, routeConfig);
+            logger.debug("Configuring route: {} for path {} -> URI: {}",
+                    routeId, routeConfig.getPath(), targetUri);
 
             return r.path(routeConfig.getPath())
                     .filters(f -> buildFilters(f, serviceConfig, routeConfig))
-                    .uri(getTargetUri(serviceConfig, routeConfig));
+                    .uri(targetUri);
         });
     }
 
@@ -89,11 +91,52 @@ public class RouteBuilder {
         return filterSpec;
     }
 
+    /**
+     * Construye la URI de destino sin incluir el puerto 443 explícitamente
+     * para evitar problemas con servicios HTTPS en Render
+     */
     private String getTargetUri(ServiceConfig serviceConfig, RouteConfig routeConfig) {
-        String baseUri = serviceConfig.getUri();
+        String baseUri = buildCleanUri(serviceConfig);
+
         if (routeConfig.getTargetPath() != null && !routeConfig.getTargetPath().isEmpty()) {
-            return baseUri + routeConfig.getTargetPath();
+            String finalUri = baseUri + routeConfig.getTargetPath();
+            logger.debug("Target URI with path: {}", finalUri);
+            return finalUri;
         }
+
+        logger.debug("Target URI: {}", baseUri);
         return baseUri;
+    }
+
+    /**
+     * Construye la URI limpia del servicio.
+     * Para HTTPS estándar (puerto 443), no incluye el puerto explícitamente
+     * ya que Render y otros servicios cloud pueden tener problemas con :443 explícito
+     */
+    private String buildCleanUri(ServiceConfig serviceConfig) {
+        String host = serviceConfig.getHost();
+        Integer port = serviceConfig.getPort();
+
+        // Si el serviceConfig ya tiene una URI construida, verificarla
+        if (serviceConfig.getUri() != null && !serviceConfig.getUri().isEmpty()) {
+            String uri = serviceConfig.getUri();
+            // Remover :443 si está presente
+            if (uri.endsWith(":443")) {
+                uri = uri.substring(0, uri.length() - 4);
+                logger.debug("Removed explicit :443 from URI: {}", uri);
+            }
+            return uri;
+        }
+
+        // Construir URI desde host y port
+        if (port == null || port == 443) {
+            String uri = "https://" + host;
+            logger.debug("Built HTTPS URI without explicit port: {}", uri);
+            return uri;
+        }
+
+        String uri = "https://" + host + ":" + port;
+        logger.debug("Built URI with custom port: {}", uri);
+        return uri;
     }
 }
