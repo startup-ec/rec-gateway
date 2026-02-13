@@ -19,6 +19,7 @@ spring:
                 allowedOrigins:
                   - "http://localhost:4200"
                   - "https://kbastidz.github.io"
+                  - "https://stevenbsg-collb.github.io"
                 allowedMethods: "*"
                 allowedHeaders: "*"
                 allowCredentials: true
