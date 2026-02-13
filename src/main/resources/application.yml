@@ -37,7 +37,7 @@ cognito:
 
 # ===== CONFIGURACIÓN DE CORS (custom) =====
 cors:
-  allowed-origins: http://localhost:4200,https://kbastidz.github.io
+  allowed-origins: http://localhost:4200,https://kbastidz.github.io,https://stevenbsg-collb.github.io
 
 # ===============================================
 # NUEVA ARQUITECTURA ESCALABLE - COMPLEMENTARIA
