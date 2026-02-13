@@ -110,7 +110,7 @@ gateway:
     rec-leaf-scan-cacao:
       name: rec-leaf-scan-cacao
       host: ${REC_LEAF_SCAN_HOST}
-      port: ${REC_LEAF_SCAN_PORT:8083}
+      port: ${REC_LEAF_SCAN_PORT:443}
       base-path: ""
       requires-auth: true
       health-endpoint: /actuator/health
